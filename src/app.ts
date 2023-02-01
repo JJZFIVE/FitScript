@@ -99,11 +99,13 @@ app.post("/", async (req, res) => {
         // ADD MORE HERE IF NECESSARY WITH THEIR OWN CODE. A TS ENUM WOULD BE GOOD HERE
       }
 
-      console.log("Going into GPT3 with message:" + message + "...");
+      console.log("Going into GPT3 with message: " + message);
       const gptResponse = await openai
         .createCompletion({
           model: "text-davinci-003",
-          prompt: message + " Do not include weights yet. (END OF PROMPT)",
+          prompt:
+            message +
+            " Do not include weights yet. Be concise. (END OF PROMPT)",
           temperature: 0.5,
           max_tokens: 100,
           top_p: 1,
