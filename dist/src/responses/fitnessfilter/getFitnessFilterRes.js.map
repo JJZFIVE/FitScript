@@ -1,0 +1,1 @@
+{"version":3,"file":"getFitnessFilterRes.js","sourceRoot":"","sources":["../../../../src/responses/fitnessfilter/getFitnessFilterRes.ts"],"names":[],"mappings":";;AAAA,MAAM,SAAS,GAAG,EAAE,CAAC;AAErB,SAAwB,mBAAmB;IACzC,MAAM,aAAa,GAAG,SAAS,CAAC,IAAI,CAAC,KAAK,CAAC,IAAI,CAAC,MAAM,EAAE,GAAG,SAAS,CAAC,MAAM,CAAC,CAAC,CAAC;IAC9E,OAAO,aAAa,CAAC;AACvB,CAAC;AAHD,sCAGC"}

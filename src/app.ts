@@ -1,10 +1,12 @@
-require("dotenv").config(); // Lambda does not like requiring dotenv
+require("dotenv").config();
 const { Configuration, OpenAIApi } = require("openai");
 const { spawn } = require("child_process");
 const express = require("express");
 const { urlencoded } = require("body-parser");
 const MessagingResponse = require("twilio").twiml.MessagingResponse;
-const twilioClient = require("twilio"); // twilioClient.validateRequest() validates that the webhook is being send from Twilio
+const twilioClient = require("twilio");
+const getFilterErrorMsg = require("./responses/fitnessfilter/filterErrorMsg");
+const getNewUserMsg = require("./responses/signup/newUser");
 
 const app = express();
 app.use(urlencoded({ extended: false }));
@@ -19,7 +21,7 @@ const openai = new OpenAIApi(configuration);
 const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
 const WEBHOOKURL = process.env.WEBHOOKURL; // This is the URL that Twilio will send the webhook to
 
-async function sendTwilioSMS(message, res) {
+async function sendTwilioSMS(message: any, res: any) {
   // Return specific twilio XML response
   const twiml = new MessagingResponse();
   twiml.message(message);
@@ -61,7 +63,7 @@ app.post("/", async (req, res) => {
 
     pythonProcess.stdout.on("data", async (data) => {
       // Data is returned in Buffer format, with format <Buffer 5b 31 5d 0a> (e.g. [1]\n)
-      const isAboutFitness = parseInt(data[1] - charCodeZero); // 1 = true, 0 = false
+      const isAboutFitness = data[1] - charCodeZero; // 1 = true, 0 = false
 
       if (isAboutFitness !== 1) {
         errored = 1;
@@ -73,10 +75,7 @@ app.post("/", async (req, res) => {
           break;
         // Is not about fitness
         case 1:
-          sendTwilioSMS(
-            "As a fitness bot, I can only talk about working out. Try asking me something fitness related!",
-            res
-          );
+          sendTwilioSMS(getFilterErrorMsg(), res);
           return;
         // ADD MORE HERE IF NECESSARY WITH THEIR OWN CODE. A TS ENUM WOULD BE GOOD HERE
       }
@@ -93,12 +92,13 @@ app.post("/", async (req, res) => {
         })
         .then((response) => response.data.choices[0].text.trim());
 
+      console.log(gptResponse);
       sendTwilioSMS(gptResponse, res);
       return;
     });
   } catch (error) {
     sendTwilioSMS(
-      error.message | "Error - please try again or contact support",
+      error.message || "Error - please try again or contact support",
       res
     );
     return;
