@@ -7,14 +7,18 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-require("dotenv").config(); // Lambda does not like requiring dotenv
+require("dotenv").config();
 const { Configuration, OpenAIApi } = require("openai");
 const { spawn } = require("child_process");
 const express = require("express");
 const { urlencoded } = require("body-parser");
 const MessagingResponse = require("twilio").twiml.MessagingResponse;
-const twilioClient = require("twilio"); // twilioClient.validateRequest() validates that the webhook is being send from Twilio
-const getFilterResponse = require("./responses/fitnessfilter/getFilterResponse");
+const twilioClient = require("twilio");
+// Personal modules
+const getFilterErrorMsg = require("./responses/fitnessfilter/filterErrorMsg");
+const getNewUserMsg = require("./responses/signup/newUser");
+const inviteUser = require("./responses/admin-commands/invite");
+const sendTwilioSMS = require("./functions/sendTwilioSMS");
 const app = express();
 app.use(urlencoded({ extended: false }));
 const port = 6969;
@@ -25,15 +29,8 @@ const openai = new OpenAIApi(configuration);
 // Twilio config
 const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
 const WEBHOOKURL = process.env.WEBHOOKURL; // This is the URL that Twilio will send the webhook to
-function sendTwilioSMS(message, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        // Return specific twilio XML response
-        const twiml = new MessagingResponse();
-        twiml.message(message);
-        res.writeHead(200, { "Content-Type": "text/xml" });
-        res.end(twiml.toString());
-    });
-}
+// Main webhook when they respond to our Twilio SMS
+// Future versions will branch conditionally off from here, but this is the main component of the app
 app.post("/", (req, res) => __awaiter(this, void 0, void 0, function* () {
     try {
         // Have to do this errored method instead of catch block due to child process.on() for Python
@@ -43,13 +40,25 @@ app.post("/", (req, res) => __awaiter(this, void 0, void 0, function* () {
         const body = req.body;
         const isValid = twilioClient.validateRequest(TWILIO_AUTH_TOKEN, twilioSignature, WEBHOOKURL, body);
         if (!isValid) {
-            return res.status(403).send("Invalid request");
+            return res.status(403).send("Invalid request, not from Twilio");
         }
         const message = body.Body;
         const twilioFrom = body.From;
         const twilioTo = body.To;
         const twilioMessageSid = body.MessageSid;
-        // Run through Python filter to see if it's about fitness
+        /************************
+        Checks for admin commands
+        ************************/
+        // Admin command: /invite <phone number>, in form +1XXXXXXXXXX
+        const inviteUserResponse = yield inviteUser(res, message);
+        if (inviteUserResponse.success)
+            return;
+        // Admin command: ETC ETC
+        // Admin command: ETC ETC
+        // Admin command: ETC ETC
+        /************************
+        Not an admin command, so continue with normal flow
+        ************************/
         const pythonProcess = spawn("python", [
             "fitnessfilter/test_model.py",
             message,
@@ -67,7 +76,7 @@ app.post("/", (req, res) => __awaiter(this, void 0, void 0, function* () {
                     break;
                 // Is not about fitness
                 case 1:
-                    sendTwilioSMS("As a fitness bot, I can only talk about working out. Try asking me something fitness related!", res);
+                    sendTwilioSMS(getFilterErrorMsg(), res);
                     return;
                 // ADD MORE HERE IF NECESSARY WITH THEIR OWN CODE. A TS ENUM WOULD BE GOOD HERE
             }

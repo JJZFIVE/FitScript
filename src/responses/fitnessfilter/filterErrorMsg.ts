@@ -25,3 +25,5 @@ function getFilterErrorMsg_(): string {
 }
 
 module.exports = getFilterErrorMsg_;
+
+export {};

@@ -3,10 +3,13 @@ const { Configuration, OpenAIApi } = require("openai");
 const { spawn } = require("child_process");
 const express = require("express");
 const { urlencoded } = require("body-parser");
-const MessagingResponse = require("twilio").twiml.MessagingResponse;
 const twilioClient = require("twilio");
+
+// Personal modules
 const getFilterErrorMsg = require("./responses/fitnessfilter/filterErrorMsg");
 const getNewUserMsg = require("./responses/signup/newUser");
+const inviteUser = require("./responses/admin-commands/invite");
+const respondTwilioSMS = require("./functions/respondTwilioSMS");
 
 const app = express();
 app.use(urlencoded({ extended: false }));
@@ -21,15 +24,8 @@ const openai = new OpenAIApi(configuration);
 const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
 const WEBHOOKURL = process.env.WEBHOOKURL; // This is the URL that Twilio will send the webhook to
 
-async function sendTwilioSMS(message: any, res: any) {
-  // Return specific twilio XML response
-  const twiml = new MessagingResponse();
-  twiml.message(message);
-
-  res.writeHead(200, { "Content-Type": "text/xml" });
-  res.end(twiml.toString());
-}
-
+// Main webhook when they respond to our Twilio SMS
+// Future versions will branch conditionally off from here, but this is the main component of the app
 app.post("/", async (req, res) => {
   try {
     // Have to do this errored method instead of catch block due to child process.on() for Python
@@ -46,15 +42,38 @@ app.post("/", async (req, res) => {
     );
 
     if (!isValid) {
-      return res.status(403).send("Invalid request");
+      return res.status(403).send("Invalid request, not from Twilio");
     }
 
-    const message = body.Body;
+    const message = body.Body.trim();
     const twilioFrom = body.From;
     const twilioTo = body.To;
     const twilioMessageSid = body.MessageSid;
 
-    // Run through Python filter to see if it's about fitness
+    /************************
+    Checks for admin commands, which start with /
+    ************************/
+
+    if (message.startsWith("/") && twilioFrom === process.env.ADMIN_NUMBER) {
+      // Admin command: /invite <phone number>, in form +1XXXXXXXXXX
+      const inviteUserResponse = await inviteUser(res, message);
+      if (inviteUserResponse.success) return;
+      else if (inviteUserResponse.message) {
+        respondTwilioSMS(res, inviteUserResponse.message);
+        return;
+      }
+
+      // Admin command: ETC ETC
+
+      // Admin command: ETC ETC
+
+      // Admin command: ETC ETC
+    }
+
+    /************************
+    Not an admin command, so continue with normal flow
+    ************************/
+
     const pythonProcess = spawn("python", [
       "fitnessfilter/test_model.py",
       message,
@@ -75,31 +94,32 @@ app.post("/", async (req, res) => {
           break;
         // Is not about fitness
         case 1:
-          sendTwilioSMS(getFilterErrorMsg(), res);
+          respondTwilioSMS(res, getFilterErrorMsg());
           return;
         // ADD MORE HERE IF NECESSARY WITH THEIR OWN CODE. A TS ENUM WOULD BE GOOD HERE
       }
 
+      console.log("Going into GPT3 with message:" + message + "...");
       const gptResponse = await openai
         .createCompletion({
           model: "text-davinci-003",
           prompt: message + " Do not include weights yet. (END OF PROMPT)",
           temperature: 0.5,
-          max_tokens: 160,
+          max_tokens: 100,
           top_p: 1,
           frequency_penalty: 0,
           presence_penalty: 0,
         })
         .then((response) => response.data.choices[0].text.trim());
 
-      console.log(gptResponse);
-      sendTwilioSMS(gptResponse, res);
+      console.log("GPT-3 response: " + gptResponse);
+      respondTwilioSMS(res, gptResponse);
       return;
     });
   } catch (error) {
-    sendTwilioSMS(
-      error.message || "Error - please try again or contact support",
-      res
+    respondTwilioSMS(
+      res,
+      error.message || "Error - please try again or contact support"
     );
     return;
   }
