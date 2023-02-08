@@ -12,11 +12,6 @@ type SignupHandlerRequest = {
   is_admin: boolean;
 };
 
-type SignupHandlerResponse = {
-  success: boolean;
-  message?: string;
-};
-
 const signupHandler = async (req: Request, res: Response) => {
   try {
     const body: SignupHandlerRequest = req.body;
