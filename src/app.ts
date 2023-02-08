@@ -2,13 +2,13 @@ require("dotenv").config();
 const { Configuration, OpenAIApi } = require("openai");
 const { spawn } = require("child_process");
 const express = require("express");
-const { urlencoded } = require("body-parser");
+const { urlencoded, json } = require("body-parser");
 const twilioClient = require("twilio");
 const pool = require("./db");
+const cors = require("cors");
 
 // Personal modules
 const getFilterErrorMsg = require("./responses/fitnessfilter/filterErrorMsg");
-const getNewUserMsg = require("./responses/signup/newUser");
 const getNoUserMsg = require("./responses/signup/noUser");
 const inviteUser = require("./responses/admin-commands/invite");
 const respondTwilioSMS = require("./functions/respondTwilioSMS");
@@ -16,11 +16,17 @@ const getDashboardMsg = require("./responses/customer/dashboardMsg");
 const getPremiumMsg = require("./responses/customer/premiumMsg");
 const isAdmin = require("./functions/isAdmin");
 
+// Routes
+const signupHandler = require("./routes/signup");
+
 import type { Customer } from "./types/db";
 
 const app = express();
-app.use(urlencoded({ extended: false }));
+app.use(json());
+app.use(cors());
 const port = 6969;
+
+const urlencoder = urlencoded({ extended: false });
 
 const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
@@ -41,7 +47,7 @@ enum TextClassifications {
 
 // Main webhook when they respond to our Twilio SMS
 // Future versions will branch conditionally off from here, but this is the main component of the app
-app.post("/", async (req, res) => {
+app.post("/", urlencoder, async (req, res) => {
   try {
     // Have to do this errored method instead of catch block due to child process.on() for Python
     let errored = 0;
@@ -70,13 +76,26 @@ app.post("/", async (req, res) => {
     const client = await pool.connect();
     const sql = `SELECT * FROM CUSTOMER WHERE phone LIKE '${twilioFrom}'`;
     const { rows } = await client.query(sql);
-    const customer: Customer | undefined = rows[0];
+    let customer: Customer | undefined = rows[0];
 
     if (!customer) {
-      client.release();
-      respondTwilioSMS(res, getNoUserMsg());
-      return;
+      // client.release();
+      // respondTwilioSMS(res, getNoUserMsg());
+      // return;
+
+      customer = {
+        phone: twilioFrom,
+        firstname: "",
+        is_admin: true,
+        date_registered: new Date("2023-02-05T23:58:36.745Z"),
+        premium: false,
+        benchmark_page_secret_code: "6d2e0b",
+        benchmark_page_prettier_id: "d8609772",
+        recent_code_refresh: new Date("2023-02-05T23:58:36.745Z"),
+      };
     }
+
+    console.log("INCOMING MESSAGE:" + message);
 
     /************************
     Checks for admin commands, which start with /
@@ -117,7 +136,7 @@ app.post("/", async (req, res) => {
         break;
       case TextClassifications.Dashboard:
         client.release();
-        respondTwilioSMS(res, getDashboardMsg());
+        respondTwilioSMS(res, getDashboardMsg(client, customer));
         return;
       case TextClassifications.Premium:
         client.release();
@@ -184,6 +203,8 @@ app.post("/", async (req, res) => {
     return;
   }
 });
+
+app.post("/signup", signupHandler);
 
 app.listen(port, () => {
   console.log(`You son of a bitch, I'm listening on port ${port}`);
