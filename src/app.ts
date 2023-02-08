@@ -37,8 +37,6 @@ const openai = new OpenAIApi(configuration);
 const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
 const WEBHOOKURL = process.env.WEBHOOKURL; // This is the URL that Twilio will send the webhook to
 
-const WEBSITE_URL = process.env.WEBSITE_URL;
-
 enum TextClassifications {
   Fitness = 0,
   Dashboard = 1,
@@ -74,25 +72,26 @@ app.post("/", urlencoder, async (req, res) => {
     ************************/
 
     const client = await pool.connect();
-    const sql = `SELECT * FROM CUSTOMER WHERE phone LIKE '${twilioFrom}'`;
+    const sql = `SELECT * FROM CUSTOMER WHERE phone = '${twilioFrom}'`;
     const { rows } = await client.query(sql);
     let customer: Customer | undefined = rows[0];
 
     if (!customer) {
-      // client.release();
-      // respondTwilioSMS(res, getNoUserMsg());
-      // return;
+      client.release();
+      respondTwilioSMS(res, getNoUserMsg());
+      return;
 
-      customer = {
-        phone: twilioFrom,
-        firstname: "",
-        is_admin: true,
-        date_registered: new Date("2023-02-05T23:58:36.745Z"),
-        premium: false,
-        benchmark_page_secret_code: "6d2e0b",
-        benchmark_page_prettier_id: "d8609772",
-        recent_code_refresh: new Date("2023-02-05T23:58:36.745Z"),
-      };
+      // FOR BLAINE TESTING
+      // customer = {
+      //   phone: twilioFrom,
+      //   firstname: "",
+      //   is_admin: true,
+      //   date_registered: new Date("2023-02-05T23:58:36.745Z"),
+      //   premium: false,
+      //   benchmark_page_secret_code: "6d2e0b",
+      //   benchmark_page_prettier_id: "d8609772",
+      //   recent_code_refresh: new Date("2023-02-05T23:58:36.745Z"),
+      // };
     }
 
     console.log("INCOMING MESSAGE:" + message);
