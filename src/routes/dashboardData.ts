@@ -18,7 +18,7 @@ const dashboardData = async (req: Request, res: Response) => {
     const client = await pool.connect();
 
     // Select customer
-    const SELECTCUSTOMER = `SELECT * FROM CUSTOMER WHERE phone = '${phone}'`;
+    const SELECTCUSTOMER = `SELECT * FROM CUSTOMER WHERE phone = '${phone}';`;
     const selectData = await client.query(SELECTCUSTOMER);
     let customer: Customer | undefined = selectData.rows[0];
 
@@ -32,12 +32,27 @@ const dashboardData = async (req: Request, res: Response) => {
 
     // Select goal and benchmarks info
 
-    const SELECTGOAL = `SELECT * FROM GOAL WHERE phone = '${phone}'`;
+    const SELECTGOAL = `SELECT * FROM GOAL WHERE phone = '${phone}';`;
     const goalData = await client.query(SELECTGOAL);
     let goal: Goal | undefined = goalData.rows[0];
 
-    // TODO: Benchmarks
-    const benchmarks = {};
+    // Benchmarks
+    enum BenchmarkQueries {
+      Bench = 0,
+      Squat = 1,
+      Deadlift = 2,
+    }
+    const BENCH_QUERY = `SELECT value FROM BENCH_BM WHERE phone = '${phone}' ORDER BY timestamp DESC LIMIT 1;`;
+    const SQUAT_QUERY = `SELECT value FROM SQUAT_BM WHERE phone = '${phone}' ORDER BY timestamp DESC LIMIT 1;`;
+    const DEADLIFT_QUERY = `SELECT value FROM DEADLIFT_BM WHERE phone = '${phone}' ORDER BY timestamp DESC LIMIT 1;`;
+    const SELECTBENCHMARKS = BENCH_QUERY + SQUAT_QUERY + DEADLIFT_QUERY;
+
+    const benchmarkData = await client.query(SELECTBENCHMARKS);
+    const bench = benchmarkData[BenchmarkQueries.Bench].rows[0]?.value;
+    const squat = benchmarkData[BenchmarkQueries.Squat].rows[0]?.value;
+    const deadlift = benchmarkData[BenchmarkQueries.Deadlift].rows[0]?.value;
+
+    const benchmarks = { bench: bench, squat: squat, deadlift: deadlift };
 
     client.release();
 

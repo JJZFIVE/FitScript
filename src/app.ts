@@ -11,6 +11,7 @@ const getShortToken = require("./routes/getShortToken");
 const getLongToken = require("./routes/getLongToken");
 const dashboardData = require("./routes/dashboardData");
 const updateGoal = require("./routes/updateGoal");
+const updateBenchmark = require("./routes/updateBenchmark");
 
 // Middleware
 const checkToken = require("./middleware/checkToken");
@@ -28,6 +29,7 @@ app.get("/auth/get-short-token", getShortToken);
 app.get("/auth/get-long-token", getLongToken);
 app.get("/dashboard/data/:phone", dashboardData); // TODO: Add checktoken to get dashboard data
 app.put("/customer/update-goal", updateGoal); // TODO: add checkToken to update goal
+app.post("/customer/update-benchmark", updateBenchmark); // TODO: add checkToken to update goal
 
 app.listen(port, () => {
   console.log(`You son of a bitch, I'm listening on port ${port}`);
