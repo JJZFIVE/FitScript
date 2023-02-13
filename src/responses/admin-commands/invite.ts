@@ -24,7 +24,7 @@ async function inviteUser_(res: any, message: string): Promise<adminResponse> {
       // Add to database
 
       const newUserMsg = getNewUserMsg();
-      sendTwilioSMS(newUserMsg, phoneNumber);
+      sendTwilioSMS(phoneNumber, newUserMsg);
 
       return { success: true };
     } else {

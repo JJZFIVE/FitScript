@@ -4,17 +4,16 @@ type Customer = {
   is_admin: boolean;
   date_registered: Date;
   premium: boolean;
-  benchmark_page_secret_code: string;
-  benchmark_page_prettier_id: string;
+  dashboard_secret: string;
   recent_code_refresh: Date;
 };
 
 type Goal = {
   id: string;
   value: string;
-  frequency_by_day: string | null;
-  frequency_num_week: number | null;
-  customer_phone: string;
+  frequency: string | null;
+  phone: string;
+  timestamp: Date;
 };
 
 type Benchmark = {

@@ -1,12 +1,12 @@
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
 
-import type { Request, Response, NextFunction } from "express";
+import type { Response, NextFunction } from "express";
+import type { RequestToken } from "../types/ExpressModified";
 const JWT_SECRET = process.env.JWT_SECRET;
 
-const checkToken = (req: Request, res: Response, next: NextFunction) => {
+const checkToken = (req: RequestToken, res: Response, next: NextFunction) => {
   const authHeader = req.headers["authorization"];
-  const phoneValidate = req.query.phone; // Personal header, made this to check if the phone number in the token matches the phone number in the header
 
   if (
     typeof authHeader !== "undefined" &&
@@ -19,17 +19,11 @@ const checkToken = (req: Request, res: Response, next: NextFunction) => {
           .status(403)
           .json({ success: false, message: "Invalid token" });
 
-      const decodedPhone = decoded.phone;
+      const phone = decoded.phone;
 
-      console.log(decodedPhone, phoneValidate);
-      if (phoneValidate !== decodedPhone) {
-        return res.status(403).json({
-          success: false,
-          message:
-            "Unauthenticated request: 'Phone-Number' header does not match token phone number",
-        });
-      }
-
+      // Append token and phone to the request object
+      req.token = token;
+      req.phone = phone;
       next();
     });
   } else {

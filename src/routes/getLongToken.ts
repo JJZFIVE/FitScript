@@ -12,7 +12,10 @@ type SignupHandlerRequest = {
   is_admin: boolean;
 };
 
-const getToken = async (req: Request, res: Response) => {
+// TODO: anyone can get a token. Change this so that they have to sign in
+// TODO It'll grant them a token WHEN THEY SIGN IN, SO MAKE A TRIP TO THE DATABASE FOR DASHBOARD SECRET
+// A token of 1 day. For dashboard use primarily
+const getLongToken = async (req: Request, res: Response) => {
   try {
     const header = req.headers["authorization"];
 
@@ -31,7 +34,7 @@ const getToken = async (req: Request, res: Response) => {
 
       const phone = req.query.phone;
       const payload = { phone: phone };
-      const token = jwt.sign(payload, JWT_SECRET, { expiresIn: 10 }); // Number is seconds. String is milliseconds
+      const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "1d" });
 
       return res.status(200).json({
         success: true,
@@ -48,6 +51,6 @@ const getToken = async (req: Request, res: Response) => {
   }
 };
 
-module.exports = getToken;
+module.exports = getLongToken;
 
 export {};

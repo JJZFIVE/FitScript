@@ -10,6 +10,7 @@
   "author": "Joe Zakielarz <jjzfive@gmail.com>",
   "license": "MIT",
   "dependencies": {
+    "bad-words": "^3.0.4",
     "body-parser": "^1.20.1",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
