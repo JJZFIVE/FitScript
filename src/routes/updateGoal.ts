@@ -2,6 +2,8 @@ require("dotenv").config();
 const pool = require("../db");
 const jwt = require("jsonwebtoken");
 const JWT_SECRET = process.env.JWT_SECRET;
+const Filter = require("bad-words");
+const filter = new Filter();
 
 import type { Customer, Goal } from "../types/db";
 import type { Response } from "express";
@@ -35,6 +37,12 @@ const updateGoal = async (req: RequestToken, res: Response) => {
       });
     }
 
+    if (filter.isProfane(newValue))
+      return res.status(500).send({
+        success: false,
+        message: "Do not include bad words in your goal!",
+      });
+
     // // TODO with JWT token verification. This verifies that the
     // const token =
     //   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZSI6IisxMzAyNzQwOTc0NSIsImlhdCI6MTY3NjMxNzg0MywiZXhwIjoxNjc4OTA5ODQzfQ.Sd9cHJJ28v8pBOpQ6NakfsU9o9YOaKycUIKCfe63xdM";
@@ -45,8 +53,6 @@ const updateGoal = async (req: RequestToken, res: Response) => {
     //   return res.status(403).json({ success: false, message: "Invalid token" });
 
     // console.log(decoded);
-
-    console.log("here");
 
     const client = await pool.connect();
 
@@ -63,7 +69,12 @@ const updateGoal = async (req: RequestToken, res: Response) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).send({ success: false, message: error.message });
+    res.status(500).send({
+      success: false,
+      message: `Error updating your ${
+        req.body.setting == "value" ? "goal" : "workout frequency"
+      }`,
+    });
   }
 };
 
