@@ -8,10 +8,11 @@ const cors = require("cors");
 const signupHandler = require("./routes/signup");
 const twilioWebhook = require("./routes/twilioWebhook");
 const getShortToken = require("./routes/getShortToken");
-const getLongToken = require("./routes/getLongToken");
+const login = require("./routes/login");
 const dashboardData = require("./routes/dashboardData");
 const updateGoal = require("./routes/updateGoal");
 const updateBenchmark = require("./routes/updateBenchmark");
+const verifyToken = require("./routes/verifyToken");
 
 // Middleware
 const checkToken = require("./middleware/checkToken");
@@ -26,10 +27,11 @@ const urlencoder = urlencoded({ extended: false });
 app.post("/", urlencoder, twilioWebhook);
 app.post("/signup", checkToken, signupHandler);
 app.get("/auth/get-short-token", getShortToken);
-app.get("/auth/get-long-token", getLongToken);
-app.get("/dashboard/data/:phone", dashboardData); // TODO: Add checktoken to get dashboard data
-app.put("/customer/update-goal", updateGoal); // TODO: add checkToken to update goal
-app.post("/customer/update-benchmark", updateBenchmark); // TODO: add checkToken to update goal
+app.post("/auth/login", login);
+app.post("/auth/verify-token", verifyToken);
+app.get("/dashboard/data/:phone", checkToken, dashboardData); // TODO: Add checktoken to get dashboard data
+app.put("/customer/update-goal", checkToken, updateGoal); // TODO: add checkToken to update goal
+app.post("/customer/update-benchmark", checkToken, updateBenchmark); // TODO: add checkToken to update goal
 
 app.listen(port, () => {
   console.log(`You son of a bitch, I'm listening on port ${port}`);
