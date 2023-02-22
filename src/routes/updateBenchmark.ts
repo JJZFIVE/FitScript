@@ -29,6 +29,7 @@ const benchmarkName = {
 // ADD BAD WORDS CHECKER HERE IN THE GOAL
 
 const updateGoal = async (req: RequestToken, res: Response) => {
+  let client;
   try {
     const body: UpdateBenchmarkBody = req.body;
     req.phone = "+13027409745"; // remove this
@@ -53,8 +54,6 @@ const updateGoal = async (req: RequestToken, res: Response) => {
     const UPDATE = `INSERT INTO ${benchmarkName[benchmark].tablename} (value, phone) VALUES (${newValue}, '${phone}');`;
     await client.query(UPDATE);
 
-    client.release();
-
     return res.status(200).send({
       success: true,
       message: `Successfully updated your ${benchmarkName[benchmark].returnMessage}`,
@@ -69,6 +68,9 @@ const updateGoal = async (req: RequestToken, res: Response) => {
           : "benchmark"
       }`,
     });
+  } finally {
+    // This is crucial to ensure client is always released regardless of error
+    if (client) client.release();
   }
 };
 

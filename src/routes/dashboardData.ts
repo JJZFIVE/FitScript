@@ -5,6 +5,7 @@ import type { Customer, Goal } from "../types/db";
 import type { Request, Response } from "express";
 
 const dashboardData = async (req: Request, res: Response) => {
+  let client;
   try {
     const phone = req.params.phone;
 
@@ -54,8 +55,6 @@ const dashboardData = async (req: Request, res: Response) => {
 
     const benchmarks = { bench: bench, squat: squat, deadlift: deadlift };
 
-    client.release();
-
     return res.status(200).send({
       success: true,
       message: "Sending customer information to dashboard",
@@ -66,6 +65,9 @@ const dashboardData = async (req: Request, res: Response) => {
   } catch (error) {
     console.error(error);
     res.status(500).send({ success: false, message: error.message });
+  } finally {
+    // This is crucial to ensure client is always released regardless of error
+    if (client) client.release();
   }
 };
 

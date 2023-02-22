@@ -32,6 +32,7 @@ enum TextClassifications {
 }
 
 const twilioWebhook = async (req: Request, res: Response) => {
+  let client;
   try {
     // Have to do this errored method instead of catch block due to child process.on() for Python
     let errored = 0;
@@ -63,7 +64,6 @@ const twilioWebhook = async (req: Request, res: Response) => {
     let customer: Customer | undefined = rows[0];
 
     if (!customer) {
-      client.release();
       respondTwilioSMS(res, getNoUserMsg());
       return;
 
@@ -91,7 +91,6 @@ const twilioWebhook = async (req: Request, res: Response) => {
       const inviteUserResponse = await inviteUser(res, message);
       if (inviteUserResponse.success) return;
       else if (inviteUserResponse.message) {
-        client.release();
         respondTwilioSMS(res, inviteUserResponse.message);
         return;
       }
@@ -120,15 +119,12 @@ const twilioWebhook = async (req: Request, res: Response) => {
         // Nothing here -- continue along the flow
         break;
       case TextClassifications.Dashboard:
-        client.release();
         respondTwilioSMS(res, getDashboardMsg(client, customer));
         return;
       case TextClassifications.Premium:
-        client.release();
         respondTwilioSMS(res, getPremiumMsg());
         return;
       default:
-        client.release();
         respondTwilioSMS(res, getFilterErrorMsg());
         return;
     }
@@ -154,14 +150,12 @@ const twilioWebhook = async (req: Request, res: Response) => {
           break;
         // Is not about fitness
         case 1:
-          client.release();
           respondTwilioSMS(res, getFilterErrorMsg());
           return;
         // ADD MORE HERE IF NECESSARY WITH THEIR OWN CODE. A TS ENUM WOULD BE GOOD HERE
       }
 
       // RELEASE CLIENT BEFORE GPT3 RESPONSE
-      client.release();
 
       const gptResponse = await openai
         .createCompletion({
@@ -177,6 +171,7 @@ const twilioWebhook = async (req: Request, res: Response) => {
         })
         .then((response) => response.data.choices[0].text.trim());
 
+      console.log(gptResponse);
       respondTwilioSMS(res, gptResponse);
       return;
     });
@@ -186,6 +181,9 @@ const twilioWebhook = async (req: Request, res: Response) => {
       error.message || "Error - please try again or contact support"
     );
     return;
+  } finally {
+    // This is crucial to ensure client is always released regardless of error
+    if (client) client.release();
   }
 };
 

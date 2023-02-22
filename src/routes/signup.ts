@@ -13,6 +13,7 @@ type SignupHandlerRequest = {
 };
 
 const signupHandler = async (req: Request, res: Response) => {
+  let client;
   try {
     const body: SignupHandlerRequest = req.body;
     const phone = body.phone;
@@ -34,8 +35,6 @@ const signupHandler = async (req: Request, res: Response) => {
 
     // If customer, resend the text
     if (customer) {
-      client.release();
-
       sendTwilioSms(
         phone,
         `Hey ${firstname}, welcome back to FitScript! We already have you in our database, but second time's the charm!`
@@ -50,8 +49,6 @@ const signupHandler = async (req: Request, res: Response) => {
     const INSERT = `INSERT INTO CUSTOMER (phone, firstname) VALUES ('${phone}', '${firstname}')`;
     await client.query(INSERT);
 
-    client.release();
-
     sendTwilioSms(phone, getNewUserMsg(firstname));
 
     return res.status(200).send({
@@ -61,6 +58,9 @@ const signupHandler = async (req: Request, res: Response) => {
   } catch (error) {
     console.log(error);
     res.status(500).send({ success: false, message: error.message });
+  } finally {
+    // This is crucial to ensure client is always released regardless of error
+    if (client) client.release();
   }
 };
 

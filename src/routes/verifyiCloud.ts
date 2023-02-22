@@ -36,7 +36,6 @@ const verifyiCloud = async (req: Request, res: Response) => {
     // }
 
     const message = body.Body.trim();
-    console.log("MESSAGE FROM ICLOUD:" + message);
 
     return res.sendStatus(200);
   } catch (error) {
