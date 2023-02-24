@@ -2,7 +2,7 @@
 FROM node:latest
 
 # Install yarn package manager
-RUN npm install -g yarn
+#RUN npm install -g yarn
 
 # Set the working directory in the container to /app
 WORKDIR /app
