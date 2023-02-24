@@ -130,7 +130,7 @@ const twilioWebhook = async (req: Request, res: Response) => {
     }
 
     // Check if message is about fitness
-    const pythonProcess = spawn("python", [
+    const pythonProcess = spawn("python3", [
       "fitnessfilter/test_model.py",
       message,
     ]);
