@@ -12,7 +12,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const sendTwilioSMS = require("../functions/sendTwilioSMS");
+const respondTwilioSMS = require("../../functions/respondTwilioSMS");
+const sendTwilioSMS = require("../../functions/sendTwilioSMS");
+const getNewUserMsg = require("../signup/newUser");
 // Returns true if the user was invited, false if not
 function inviteUser_(res, message) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -23,11 +25,15 @@ function inviteUser_(res, message) {
                 phoneNumber[1] === "1" && // From the US
                 phoneNumber.length === 12) {
                 // Add to database
-                sendTwilioSMS();
+                const newUserMsg = getNewUserMsg();
+                sendTwilioSMS(phoneNumber, newUserMsg);
                 return { success: true };
             }
+            else {
+                return { success: false, message: "Error inviting user" };
+            }
         }
-        return { success: false, message: "Invalid phone number" };
+        return { success: false };
     });
 }
 // _ after function name because ts threw naming collision errors on import

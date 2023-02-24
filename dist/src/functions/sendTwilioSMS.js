@@ -9,14 +9,26 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-function sendTwilioSMS_(message, res) {
+require("dotenv").config();
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+const client = require("twilio")(accountSid, authToken);
+function sendTwilioSMS(to, message) {
     return __awaiter(this, void 0, void 0, function* () {
-        // Return specific twilio XML response
-        const twiml = new MessagingResponse();
-        twiml.message(message);
-        res.writeHead(200, { "Content-Type": "text/xml" });
-        res.end(twiml.toString());
+        try {
+            yield client.messages.create({
+                body: message,
+                from: "+13024837626",
+                to: to,
+            });
+            console.log("MESSAGE SENT TO" + to);
+            return true;
+        }
+        catch (error) {
+            console.log("MESSAGE NOT SENT", error.message);
+            return false;
+        }
     });
 }
-module.exports = sendTwilioSMS_;
+module.exports = sendTwilioSMS;
 //# sourceMappingURL=sendTwilioSMS.js.map

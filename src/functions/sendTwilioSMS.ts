@@ -3,7 +3,7 @@ const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const client = require("twilio")(accountSid, authToken);
 
-async function sendTwilioSMS(message: string, to: string): Promise<boolean> {
+async function sendTwilioSMS(to: string, message: string): Promise<boolean> {
   try {
     await client.messages.create({
       body: message,

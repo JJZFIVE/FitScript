@@ -4,22 +4,25 @@
   "main": "dist/src/app.js",
   "scripts": {
     "build": "tsc",
-    "start": "tsc && node dist/src/app.js",
-    "dev": "nodemon src/app.ts"
+    "start": "tsc && source fitnessfilter/.env/bin/activate && node dist/src/app.js",
+    "dev": "source fitnessfilter/.env/bin/activate && nodemon src/app.ts"
   },
   "author": "Joe Zakielarz <jjzfive@gmail.com>",
   "license": "MIT",
   "dependencies": {
+    "bad-words": "^3.0.4",
     "body-parser": "^1.20.1",
+    "cors": "^2.8.5",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.0",
     "openai": "^3.1.0",
-    "pg": "^8.8.0",
+    "pg": "^8.9.0",
     "querystring": "^0.2.1",
     "twilio": "^3.84.1"
   },
   "devDependencies": {
-    "@types/express": "^4.17.16",
+    "@types/express": "^4.17.17",
     "@types/node": "^18.11.18",
     "nodemon": "^2.0.20",
     "ts-node": "^10.9.1",
