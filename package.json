@@ -4,7 +4,7 @@
   "main": "dist/src/app.js",
   "scripts": {
     "build": "tsc",
-    "start": "tsc && source fitnessfilter/.env/bin/activate && node dist/src/app.js",
+    "start": "source fitnessfilter/venv/bin/activate && node dist/src/app.js",
     "dev": "source fitnessfilter/.env/bin/activate && nodemon src/app.ts"
   },
   "author": "Joe Zakielarz <jjzfive@gmail.com>",
