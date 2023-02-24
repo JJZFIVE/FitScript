@@ -1,5 +1,5 @@
-# Use the official Node.js image as a parent image
-FROM node:latest
+# Node-stretch-slim allows us to call Python within the nodejs container
+FROM node:stretch-slim
 
 # Install yarn package manager
 #RUN npm install -g yarn
