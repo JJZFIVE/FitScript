@@ -19,13 +19,20 @@ const checkValidNumber = require("./routes/checkValidNumber");
 const checkToken = require("./middleware/checkToken");
 
 const app = express();
-app.use(json());
+
 app.use(
   cors({
-    origin: ["https://fit-script-website.vercel.app", "http://localhost:3000"],
+    origin: [
+      "https://fit-script-website.vercel.app",
+      "https://www.fitscriptnewname.online",
+      "http://localhost:3000",
+    ],
     credentials: true,
   })
 );
+
+app.use(json());
+
 const port = 6969;
 
 const urlencoder = urlencoded({ extended: false });

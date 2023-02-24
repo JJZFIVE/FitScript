@@ -48,6 +48,8 @@ const signupHandler = async (req: Request, res: Response) => {
 
     const INSERT = `INSERT INTO CUSTOMER (phone, firstname) VALUES ('${phone}', '${firstname}')`;
     await client.query(INSERT);
+    const CREATEGOAL = `INSERT INTO GOAL (value, frequency, phone) VALUES ('My goal is to get more fit with FitScript!', '0000000', '${phone}')`;
+    await client.query(CREATEGOAL);
 
     sendTwilioSms(phone, getNewUserMsg(firstname));
 

@@ -5,6 +5,7 @@ import type { Customer, Goal } from "../types/db";
 import type { Request, Response } from "express";
 
 const checkValidNumber = async (req: Request, res: Response) => {
+  console.log("received");
   let client;
   try {
     const phone = req.params.phone;

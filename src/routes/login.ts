@@ -43,7 +43,6 @@ const login = async (req: Request, res: Response) => {
         .json({ success: false, message: "Unauthorized request" });
     }
   } catch (error) {
-    console.log(error);
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };

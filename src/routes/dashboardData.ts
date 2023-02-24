@@ -1,7 +1,7 @@
 require("dotenv").config();
 const pool = require("../db");
 
-import type { Customer, Goal } from "../types/db";
+import type { Customer, Goal, Benchmark } from "../types/db";
 import type { Request, Response } from "express";
 
 const dashboardData = async (req: Request, res: Response) => {
@@ -53,7 +53,23 @@ const dashboardData = async (req: Request, res: Response) => {
     const squat = benchmarkData[BenchmarkQueries.Squat].rows[0]?.value;
     const deadlift = benchmarkData[BenchmarkQueries.Deadlift].rows[0]?.value;
 
+    // TODO: Remove this, since creating a new user will automatically create a goal
+    const now = new Date();
+    if (!goal)
+      goal = {
+        id: "-1",
+        value: "",
+        frequency: "0000000", // No days selected
+        phone: phone,
+        timestamp: now,
+      };
+
     const benchmarks = { bench: bench, squat: squat, deadlift: deadlift };
+    if (!benchmarks.bench && !benchmarks.squat && !benchmarks.deadlift) {
+      benchmarks.bench = "";
+      benchmarks.squat = "";
+      benchmarks.deadlift = "";
+    }
 
     return res.status(200).send({
       success: true,
