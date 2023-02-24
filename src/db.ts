@@ -1,6 +1,6 @@
 const { Pool } = require("pg");
 
-const POSTGRES_DOCKER_IP = "172.17.0.3";
+const POSTGRES_DOCKER_IP = "172.17.0.2";
 
 const PORT = 5432;
 const DATABASE = "postgres";
