@@ -4,8 +4,8 @@
   "main": "dist/src/app.js",
   "scripts": {
     "build": "tsc",
-    "start": ". fitnessfilter/venv/bin/activate && node dist/src/app.js",
-    "dev": "source fitnessfilter/.env/bin/activate && nodemon src/app.ts"
+    "start": "node dist/src/app.js",
+    "dev": "source fitnessfilter/venv/bin/activate && nodemon src/app.ts"
   },
   "author": "Joe Zakielarz <jjzfive@gmail.com>",
   "license": "MIT",

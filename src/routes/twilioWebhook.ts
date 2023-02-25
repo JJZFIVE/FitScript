@@ -129,52 +129,39 @@ const twilioWebhook = async (req: Request, res: Response) => {
         return;
     }
 
-    // Check if message is about fitness
-    const pythonProcess = spawn("python3", [
-      "fitnessfilter/test_model.py",
-      message,
-    ]);
-    const charCodeZero = "0".charCodeAt(0);
+    // Checks if it's about fitness
+    const isAboutFitness = await openai
+      .createCompletion({
+        model: "curie:ft-full-moon-ai-2023-02-25-06-07-10",
+        prompt: message + "-->", // Model trained with --> at end of prompt
+        max_tokens: 1,
+      })
+      .then((response) => parseInt(response.data.choices[0].text.trim()));
 
-    pythonProcess.stdout.on("data", async (data) => {
-      // Data is returned in Buffer format, with format <Buffer 5b 31 5d 0a> (e.g. [1]\n)
-      const isAboutFitness = data[1] - charCodeZero; // 1 = true, 0 = false
-
-      if (isAboutFitness !== 1) {
-        errored = 1;
-      }
-
-      switch (errored) {
-        // Is about fitness and passes all checks
-        case 0:
-          break;
-        // Is not about fitness
-        case 1:
-          respondTwilioSMS(res, getFilterErrorMsg());
-          return;
-        // ADD MORE HERE IF NECESSARY WITH THEIR OWN CODE. A TS ENUM WOULD BE GOOD HERE
-      }
-
-      // RELEASE CLIENT BEFORE GPT3 RESPONSE
-
-      const gptResponse = await openai
-        .createCompletion({
-          model: "text-davinci-003",
-          prompt:
-            message +
-            " Do not include weights yet. Be concise. (END OF PROMPT)",
-          temperature: 0.5,
-          max_tokens: 100,
-          top_p: 1,
-          frequency_penalty: 0,
-          presence_penalty: 0,
-        })
-        .then((response) => response.data.choices[0].text.trim());
-
-      console.log(gptResponse);
-      respondTwilioSMS(res, gptResponse);
+    if (isAboutFitness !== 1) {
+      respondTwilioSMS(res, getFilterErrorMsg());
       return;
-    });
+    }
+
+    // RELEASE CLIENT BEFORE GPT3 RESPONSE
+    client.release();
+
+    const gptResponse = await openai
+      .createCompletion({
+        model: "text-davinci-003",
+        prompt:
+          message + " Do not include weights yet. Be concise. (END OF PROMPT)",
+        temperature: 0.5,
+        max_tokens: 100,
+        top_p: 1,
+        frequency_penalty: 0,
+        presence_penalty: 0,
+      })
+      .then((response) => response.data.choices[0].text.trim());
+
+    console.log("gptResponse:", gptResponse);
+    respondTwilioSMS(res, gptResponse);
+    return;
   } catch (error) {
     respondTwilioSMS(
       res,
