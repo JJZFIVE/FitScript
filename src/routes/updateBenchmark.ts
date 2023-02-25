@@ -9,6 +9,7 @@ import type { RequestToken } from "../types/ExpressModified";
 type UpdateBenchmarkBody = {
   benchmark: "bench" | "squat" | "deadlift";
   newValue: number;
+  phone: string;
 };
 
 const benchmarkName = {
@@ -32,8 +33,8 @@ const updateGoal = async (req: RequestToken, res: Response) => {
   let client;
   try {
     const body: UpdateBenchmarkBody = req.body;
-    req.phone = "+13027409745"; // remove this
-    const phone = req.phone; // THIS COMES FROM JWT DECODING, phone is in the JWT
+    req.phone = body.phone;
+    const phone = req.phone; // TODO: THIS COMES FROM JWT DECODING, phone is in the JWT
     const benchmark = body.benchmark;
     const newValue = body.newValue;
 

@@ -1,5 +1,4 @@
-# Node-stretch-slim allows us to call Python within the nodejs container
-FROM node:stretch-slim
+FROM node
 
 # Install yarn package manager
 #RUN npm install -g yarn
