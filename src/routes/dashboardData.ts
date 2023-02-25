@@ -5,7 +5,6 @@ import type { Customer, Goal, Benchmark } from "../types/db";
 import type { Request, Response } from "express";
 
 const dashboardData = async (req: Request, res: Response) => {
-  let client;
   try {
     const phone = req.params.phone;
 
@@ -16,11 +15,9 @@ const dashboardData = async (req: Request, res: Response) => {
       });
     }
 
-    const client = await pool.connect();
-
     // Select customer
     const SELECTCUSTOMER = `SELECT * FROM CUSTOMER WHERE phone = '${phone}';`;
-    const selectData = await client.query(SELECTCUSTOMER);
+    const selectData = await pool.query(SELECTCUSTOMER);
     let customer: Customer | undefined = selectData.rows[0];
 
     // If not customer, error
@@ -34,7 +31,7 @@ const dashboardData = async (req: Request, res: Response) => {
     // Select goal and benchmarks info
 
     const SELECTGOAL = `SELECT * FROM GOAL WHERE phone = '${phone}';`;
-    const goalData = await client.query(SELECTGOAL);
+    const goalData = await pool.query(SELECTGOAL);
     let goal: Goal | undefined = goalData.rows[0];
 
     // Benchmarks
@@ -48,7 +45,7 @@ const dashboardData = async (req: Request, res: Response) => {
     const DEADLIFT_QUERY = `SELECT value FROM DEADLIFT_BM WHERE phone = '${phone}' ORDER BY timestamp DESC LIMIT 1;`;
     const SELECTBENCHMARKS = BENCH_QUERY + SQUAT_QUERY + DEADLIFT_QUERY;
 
-    const benchmarkData = await client.query(SELECTBENCHMARKS);
+    const benchmarkData = await pool.query(SELECTBENCHMARKS);
     const bench = benchmarkData[BenchmarkQueries.Bench].rows[0]?.value;
     const squat = benchmarkData[BenchmarkQueries.Squat].rows[0]?.value;
     const deadlift = benchmarkData[BenchmarkQueries.Deadlift].rows[0]?.value;
@@ -82,8 +79,7 @@ const dashboardData = async (req: Request, res: Response) => {
     console.error(error);
     res.status(500).send({ success: false, message: error.message });
   } finally {
-    // This is crucial to ensure client is always released regardless of error
-    if (client) client.release();
+    console.log("Finally block executed for testing purposes");
   }
 };
 

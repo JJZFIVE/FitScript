@@ -1,6 +1,5 @@
 require("dotenv").config();
 const pool = require("../db");
-const { spawn } = require("child_process");
 const twilioClient = require("twilio");
 const { Configuration, OpenAIApi } = require("openai");
 
@@ -32,7 +31,6 @@ enum TextClassifications {
 }
 
 const twilioWebhook = async (req: Request, res: Response) => {
-  let client;
   try {
     // Have to do this errored method instead of catch block due to child process.on() for Python
     let errored = 0;
@@ -58,9 +56,8 @@ const twilioWebhook = async (req: Request, res: Response) => {
       Checks if there's a user in the database with the phone number
       ************************/
 
-    const client = await pool.connect();
     const sql = `SELECT * FROM CUSTOMER WHERE phone = '${twilioFrom}'`;
-    const { rows } = await client.query(sql);
+    const { rows } = await pool.query(sql);
     let customer: Customer | undefined = rows[0];
 
     if (!customer) {
@@ -86,7 +83,7 @@ const twilioWebhook = async (req: Request, res: Response) => {
       Checks for admin commands, which start with /
       ************************/
 
-    if (message.startsWith("/") && isAdmin(client, twilioFrom)) {
+    if (message.startsWith("/") && isAdmin(twilioFrom)) {
       // Admin command: /invite <phone number>, in form +1XXXXXXXXXX
       const inviteUserResponse = await inviteUser(res, message);
       if (inviteUserResponse.success) return;
@@ -119,10 +116,10 @@ const twilioWebhook = async (req: Request, res: Response) => {
         // Nothing here -- continue along the flow
         break;
       case TextClassifications.Dashboard:
-        respondTwilioSMS(res, getDashboardMsg(client, customer));
+        respondTwilioSMS(res, getDashboardMsg(customer));
         return;
       case TextClassifications.Premium:
-        respondTwilioSMS(res, getPremiumMsg());
+        respondTwilioSMS(res, getPremiumMsg(customer));
         return;
       default:
         respondTwilioSMS(res, getFilterErrorMsg());
@@ -138,13 +135,12 @@ const twilioWebhook = async (req: Request, res: Response) => {
       })
       .then((response) => parseInt(response.data.choices[0].text.trim()));
 
+    console.log("isAboutFitness response:", isAboutFitness);
+
     if (isAboutFitness !== 1) {
       respondTwilioSMS(res, getFilterErrorMsg());
       return;
     }
-
-    // RELEASE CLIENT BEFORE GPT3 RESPONSE
-    client.release();
 
     const gptResponse = await openai
       .createCompletion({
@@ -169,8 +165,7 @@ const twilioWebhook = async (req: Request, res: Response) => {
     );
     return;
   } finally {
-    // This is crucial to ensure client is always released regardless of error
-    if (client) client.release();
+    console.log("Finally block executed for testing purposes");
   }
 };
 

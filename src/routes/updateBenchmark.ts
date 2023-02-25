@@ -30,7 +30,6 @@ const benchmarkName = {
 // ADD BAD WORDS CHECKER HERE IN THE GOAL
 
 const updateGoal = async (req: RequestToken, res: Response) => {
-  let client;
   try {
     const body: UpdateBenchmarkBody = req.body;
     req.phone = body.phone;
@@ -50,10 +49,8 @@ const updateGoal = async (req: RequestToken, res: Response) => {
       });
     }
 
-    const client = await pool.connect();
-
     const UPDATE = `INSERT INTO ${benchmarkName[benchmark].tablename} (value, phone) VALUES (${newValue}, '${phone}');`;
-    await client.query(UPDATE);
+    await pool.query(UPDATE);
 
     return res.status(200).send({
       success: true,
@@ -70,8 +67,7 @@ const updateGoal = async (req: RequestToken, res: Response) => {
       }`,
     });
   } finally {
-    // This is crucial to ensure client is always released regardless of error
-    if (client) client.release();
+    console.log("Finally block executed for testing purposes");
   }
 };
 

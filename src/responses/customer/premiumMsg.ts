@@ -8,7 +8,7 @@ These are for when a user signs up for the first time.
 const WEBSITE_URL = process.env.WEBSITE_URL;
 
 // _ after function name because ts threw naming collision errors on import
-function getDashboardMsg_(client: any, customer: Customer): string {
+function getPremiumMsg(customer: Customer): string {
   const newUserResponses: string[] = [
     `So you're interested in upgrading to FitScript Premium? Follow this link to learn more! \n\n ${WEBSITE_URL}/premium`,
     `Follow this link to get more info about FitScript Premium for a more personalized, data-driven workout experience! \n\n ${WEBSITE_URL}/premium`,
@@ -20,6 +20,6 @@ function getDashboardMsg_(client: any, customer: Customer): string {
   return randomElement;
 }
 
-module.exports = getDashboardMsg_;
+module.exports = getPremiumMsg;
 
 export {};

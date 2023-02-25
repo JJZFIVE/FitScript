@@ -17,7 +17,6 @@ type UpdateGoalBody = {
 // ADD BAD WORDS CHECKER HERE IN THE GOAL
 
 const updateGoal = async (req: RequestToken, res: Response) => {
-  let client;
   try {
     const body: UpdateGoalBody = req.body;
     req.phone = "+13027409745"; // remove this
@@ -44,10 +43,8 @@ const updateGoal = async (req: RequestToken, res: Response) => {
         message: "Do not include bad words in your goal!",
       });
 
-    const client = await pool.connect();
-
     const UPDATE = `UPDATE GOAL SET ${setting} = '${newValue}', timestamp = to_timestamp(${Date.now()} / 1000.0) WHERE phone = '${phone}'`;
-    await client.query(UPDATE);
+    await pool.query(UPDATE);
 
     return res.status(200).send({
       success: true,
@@ -64,8 +61,7 @@ const updateGoal = async (req: RequestToken, res: Response) => {
       }`,
     });
   } finally {
-    // This is crucial to ensure client is always released regardless of error
-    if (client) client.release();
+    console.log("Finally block executed for testing purposes");
   }
 };
 

@@ -13,13 +13,10 @@ type SignupHandlerRequest = {
 };
 
 const signupHandler = async (req: Request, res: Response) => {
-  let client;
   try {
     const body: SignupHandlerRequest = req.body;
     const phone = body.phone;
     const firstname = body.firstname;
-
-    console.log(body);
 
     if (!phone || !firstname) {
       return res.status(400).send({
@@ -28,9 +25,8 @@ const signupHandler = async (req: Request, res: Response) => {
       });
     }
 
-    const client = await pool.connect();
     const SELECT = `SELECT * FROM CUSTOMER WHERE phone = '${phone}'`;
-    const { rows } = await client.query(SELECT);
+    const { rows } = await pool.query(SELECT);
     let customer: Customer | undefined = rows[0];
 
     // If customer, resend the text
@@ -46,10 +42,10 @@ const signupHandler = async (req: Request, res: Response) => {
       });
     }
 
-    const INSERT = `INSERT INTO CUSTOMER (phone, firstname) VALUES ('${phone}', '${firstname}')`;
-    await client.query(INSERT);
-    const CREATEGOAL = `INSERT INTO GOAL (value, frequency, phone) VALUES ('My goal is to get more fit with FitScript!', '0000000', '${phone}')`;
-    await client.query(CREATEGOAL);
+    const INSERT = `INSERT INTO CUSTOMER (phone, firstname) VALUES ('${phone}', '${firstname}');`;
+    const CREATEGOAL = `INSERT INTO GOAL (value, frequency, phone) VALUES ('My goal is to get more fit with FitScript!', '0000000', '${phone}');`;
+    const QUERY = INSERT + CREATEGOAL;
+    await pool.query(QUERY);
 
     sendTwilioSms(phone, getNewUserMsg(firstname));
 
@@ -61,8 +57,7 @@ const signupHandler = async (req: Request, res: Response) => {
     console.log(error);
     res.status(500).send({ success: false, message: error.message });
   } finally {
-    // This is crucial to ensure client is always released regardless of error
-    if (client) client.release();
+    console.log("Finally block executed for testing purposes");
   }
 };
 

@@ -1,12 +1,10 @@
 require("dotenv").config();
 const pool = require("../db");
 
-import type { Customer, Goal } from "../types/db";
+import type { Customer } from "../types/db";
 import type { Request, Response } from "express";
 
 const checkValidNumber = async (req: Request, res: Response) => {
-  console.log("received");
-  let client;
   try {
     const phone = req.params.phone;
     console.log("Login attempt received:", phone);
@@ -18,11 +16,9 @@ const checkValidNumber = async (req: Request, res: Response) => {
       });
     }
 
-    const client = await pool.connect();
-
     // Select customer
     const SELECTCUSTOMER = `SELECT * FROM CUSTOMER WHERE phone = '${phone}';`;
-    const selectData = await client.query(SELECTCUSTOMER);
+    const selectData = await pool.query(SELECTCUSTOMER);
     let customer: Customer | undefined = selectData.rows[0];
 
     // If not customer, error
@@ -41,8 +37,7 @@ const checkValidNumber = async (req: Request, res: Response) => {
     console.error(error);
     return res.status(500).send({ success: false, message: error.message });
   } finally {
-    // This is crucial to ensure client is always released regardless of error
-    if (client) client.release();
+    console.log("Finally block executed for testing purposes");
   }
 };
 
