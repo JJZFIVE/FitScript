@@ -8,14 +8,13 @@ const openai = new OpenAIApi(configuration);
 
 async function handler() {
   try {
-    let MESSAGE =
-      "Help me make a workout plan for a bigger chest" +
+    // let MESSAGE =
+    "Help me make a workout plan for a bigger chest" +
       " Do not include weights yet. (END OF PROMPT)";
 
-    // MESSAGE = "Who are you?";
-    MESSAGE = "How do I build muscle?";
-
     const firstname = "Joe";
+
+    // Grab all previous messages from this user within the past 2 hours.
 
     const messages = [
       {
@@ -30,11 +29,11 @@ async function handler() {
       .createChatCompletion({
         model: "gpt-3.5-turbo",
         messages: messages,
-        // temperature: 0.5,
-        // max_tokens: 200,
-        // top_p: 1,
-        // frequency_penalty: 0,
-        // presence_penalty: 0,
+        temperature: 0.5,
+        max_tokens: 200,
+        top_p: 1,
+        frequency_penalty: 0,
+        presence_penalty: 0,
       })
       .then((response) => response.data.choices[0].message.content.trim());
 

@@ -27,9 +27,16 @@ type Benchmark = {
 
 type Request = {
   id: string;
-  request_text: string;
+  value: string;
   timestamp: Date;
-  customer_phone: string;
+  phone: string;
 };
 
-export type { Customer, Goal, Benchmark, Request };
+type RequestAndResponse = {
+  id: string;
+  request_timestamp: Date;
+  request_value: string;
+  response_value: string;
+};
+
+export type { Customer, Goal, Benchmark, Request, RequestAndResponse };

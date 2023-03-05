@@ -25,16 +25,13 @@ const signupHandler = async (req: Request, res: Response) => {
       });
     }
 
-    const SELECT = `SELECT * FROM CUSTOMER WHERE phone = '${phone}'`;
-    const { rows } = await pool.query(SELECT);
+    const SELECT = `SELECT * FROM CUSTOMER WHERE phone = $1`;
+    const { rows } = await pool.query(SELECT, [phone]);
     let customer: Customer | undefined = rows[0];
 
     // If customer, resend the text
     if (customer) {
-      sendTwilioSms(
-        phone,
-        `Hey ${firstname}, welcome back to FitScript! We already have you in our database, but second time's the charm!`
-      );
+      sendTwilioSms(phone, `Hey ${firstname}, welcome back to FitScript!`);
 
       return res.status(200).send({
         success: true,
@@ -42,10 +39,11 @@ const signupHandler = async (req: Request, res: Response) => {
       });
     }
 
-    const INSERT = `INSERT INTO CUSTOMER (phone, firstname) VALUES ('${phone}', '${firstname}');`;
-    const CREATEGOAL = `INSERT INTO GOAL (value, frequency, phone) VALUES ('My goal is to get more fit with FitScript!', '0000000', '${phone}');`;
+    const INSERT = "INSERT INTO CUSTOMER (phone, firstname) VALUES ($1, $2);";
+    const CREATEGOAL =
+      "INSERT INTO GOAL (value, frequency, phone) VALUES ('My goal is to get more fit with FitScript!', '0000000', $1);";
     const QUERY = INSERT + CREATEGOAL;
-    await pool.query(QUERY);
+    await pool.query(QUERY, [phone, firstname]);
 
     sendTwilioSms(phone, getNewUserMsg(firstname));
 
@@ -56,8 +54,6 @@ const signupHandler = async (req: Request, res: Response) => {
   } catch (error) {
     console.log(error);
     res.status(500).send({ success: false, message: error.message });
-  } finally {
-    console.log("Finally block executed for testing purposes");
   }
 };
 

@@ -5,7 +5,8 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/src/app.js",
-    "dev": "nodemon src/app.ts"
+    "dev": "nodemon src/app.ts",
+    "cron": "nodemon cron/test.js"
   },
   "author": "Joe Zakielarz <jjzfive@gmail.com>",
   "license": "MIT",
@@ -16,6 +17,7 @@
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.0",
+    "node-cron": "^3.0.2",
     "openai": "^3.2.0",
     "pg": "^8.9.0",
     "querystring": "^0.2.1",

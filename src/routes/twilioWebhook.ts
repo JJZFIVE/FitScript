@@ -11,8 +11,13 @@ const respondTwilioSMS = require("../functions/respondTwilioSMS");
 const getDashboardMsg = require("../responses/customer/dashboardMsg");
 const getPremiumMsg = require("../responses/customer/premiumMsg");
 const isAdmin = require("../functions/isAdmin");
+const getRecentMessages = require("../functions/getRecentMessages");
+const insertResAndReq = require("../functions/insertResAndReq");
 
-import type { Customer } from "../types/db";
+const sendTwilioSms = require("../functions/sendTwilioSMS");
+const getNewUserMsg = require("../responses/signup/newUser");
+
+import type { Customer, RequestAndResponse } from "../types/db";
 import type { Request, Response } from "express";
 
 const configuration = new Configuration({
@@ -32,9 +37,6 @@ enum TextClassifications {
 
 const twilioWebhook = async (req: Request, res: Response) => {
   try {
-    // Have to do this errored method instead of catch block due to child process.on() for Python
-    let errored = 0;
-
     // Check if this is actually from Twilio, prevents hackers from sending requests to our webhook
     const twilioSignature = req.headers["x-twilio-signature"];
     const body = req.body;
@@ -49,43 +51,31 @@ const twilioWebhook = async (req: Request, res: Response) => {
       return res.status(403).send("Invalid request, not from Twilio");
     }
 
-    const message = body.Body.trim();
+    const MESSAGE = body.Body.trim();
     const twilioFrom = body.From;
 
     /************************
       Checks if there's a user in the database with the phone number
       ************************/
 
-    const sql = `SELECT * FROM CUSTOMER WHERE phone = '${twilioFrom}'`;
-    const { rows } = await pool.query(sql);
+    const sql = `SELECT * FROM CUSTOMER WHERE phone = $1`;
+    const { rows } = await pool.query(sql, [twilioFrom]);
     let customer: Customer | undefined = rows[0];
 
     if (!customer) {
       respondTwilioSMS(res, getNoUserMsg());
       return;
-
-      // FOR BLAINE TESTING
-      // customer = {
-      //   phone: twilioFrom,
-      //   firstname: "",
-      //   is_admin: true,
-      //   date_registered: new Date("2023-02-05T23:58:36.745Z"),
-      //   premium: false,
-      //   benchmark_page_secret_code: "6d2e0b",
-      //   benchmark_page_prettier_id: "d8609772",
-      //   recent_code_refresh: new Date("2023-02-05T23:58:36.745Z"),
-      // };
     }
 
-    console.log("INCOMING MESSAGE:" + message);
+    console.log("INCOMING MESSAGE: " + MESSAGE);
 
     /************************
       Checks for admin commands, which start with /
       ************************/
 
-    if (message.startsWith("/") && isAdmin(twilioFrom)) {
+    if (MESSAGE.startsWith("/") && isAdmin(twilioFrom)) {
       // Admin command: /invite <phone number>, in form +1XXXXXXXXXX
-      const inviteUserResponse = await inviteUser(res, message);
+      const inviteUserResponse = await inviteUser(res, MESSAGE);
       if (inviteUserResponse.success) return;
       else if (inviteUserResponse.message) {
         respondTwilioSMS(res, inviteUserResponse.message);
@@ -106,7 +96,7 @@ const twilioWebhook = async (req: Request, res: Response) => {
     const textClassification = await openai
       .createCompletion({
         model: process.env.CLASSIFIER_MODEL_NAME,
-        prompt: message + "-->", // Model trained with --> at end of prompt
+        prompt: MESSAGE + "-->", // Model trained with --> at end of prompt
         max_tokens: 1,
       })
       .then((response) => parseInt(response.data.choices[0].text.trim()));
@@ -126,46 +116,77 @@ const twilioWebhook = async (req: Request, res: Response) => {
         return;
     }
 
+    // TODO: Make a better model with better data
     // Checks if it's about fitness
     const isAboutFitness = await openai
       .createCompletion({
         model: "curie:ft-full-moon-ai-2023-02-25-06-07-10",
-        prompt: message + "-->", // Model trained with --> at end of prompt
+        prompt: MESSAGE + "-->", // Model trained with --> at end of prompt
         max_tokens: 1,
       })
       .then((response) => parseInt(response.data.choices[0].text.trim()));
-
-    console.log("isAboutFitness response:", isAboutFitness);
 
     if (isAboutFitness !== 1) {
       respondTwilioSMS(res, getFilterErrorMsg());
       return;
     }
 
+    /************************
+     * Checks if the user has sent a message in the last 2 hours
+     * If so, send a message to the user saying they can't send another message
+     * ************************/
+
+    const recentMessages: RequestAndResponse[] = await getRecentMessages(
+      customer.phone
+    );
+
+    const messages = [];
+    messages.push({
+      role: "system",
+      content: `You are FitScript, a helpful personal trainer that lives in SMS texts. Be concise and informative. The user's name is ${customer.firstname}, do not overuse their name.`,
+    });
+    // For each request and response, push user request value and then assistant response value
+    recentMessages.forEach((message) => {
+      messages.push({
+        role: "user",
+        content: message.request_value,
+      });
+
+      messages.push({
+        role: "assistant",
+        content: message.response_value,
+      });
+    });
+
+    messages.push({ role: "user", content: MESSAGE });
+
+    console.log("MESSAGES:", messages);
+
     const gptResponse = await openai
-      .createCompletion({
-        model: "text-davinci-003",
-        prompt:
-          message + " Do not include weights yet. Be concise. (END OF PROMPT)",
+      .createChatCompletion({
+        model: "gpt-3.5-turbo",
+        messages: messages,
         temperature: 0.5,
-        max_tokens: 100,
+        max_tokens: 1500, // 10x cheaper than davinci-03!
         top_p: 1,
         frequency_penalty: 0,
         presence_penalty: 0,
       })
-      .then((response) => response.data.choices[0].text.trim());
+      .then((response) => response.data.choices[0].message.content.trim());
+
+    // LOG THE REQUEST AND RESPONSE IN THE DB AS A PAIR
+    await insertResAndReq(customer, MESSAGE, gptResponse);
 
     console.log("gptResponse:", gptResponse);
     respondTwilioSMS(res, gptResponse);
     return;
   } catch (error) {
+    console.log(error.message);
     respondTwilioSMS(
       res,
       error.message || "Error - please try again or contact support"
     );
     return;
-  } finally {
-    console.log("Finally block executed for testing purposes");
   }
 };
 

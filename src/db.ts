@@ -11,7 +11,7 @@ const USER = "postgres";
 const PASSWORD = process.env.NODE_ENV == "dev" ? "" : "fitscriptpassword";
 
 const pool = new Pool({
-  max: 20,
+  max: 50,
   connectionString: `postgres://${DATABASE}:${PASSWORD}@${POSTGRES_DOCKER_IP}:${PORT}/${USER}`,
   idleTimeoutMillis: 30000,
 });
