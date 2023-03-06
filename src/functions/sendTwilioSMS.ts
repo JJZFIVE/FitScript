@@ -5,13 +5,14 @@ const client = require("twilio")(accountSid, authToken);
 
 async function sendTwilioSMS(to: string, message: string): Promise<boolean> {
   try {
+    const phoneNumber =
+      process.env.NODE_ENV == "dev" ? "+19849999370" : "+13024837626";
+
     await client.messages.create({
       body: message,
-      from: "+13024837626",
+      from: phoneNumber,
       to: to,
     });
-
-    console.log("MESSAGE SENT TO" + to);
 
     return true;
   } catch (error) {
